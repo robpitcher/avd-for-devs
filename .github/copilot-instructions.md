@@ -1,0 +1,1 @@
+- Minimize cost when possible by choosing low-cost options for test and development environments
