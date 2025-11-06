@@ -2,12 +2,6 @@
 
 Infrastructure as Code (IaC) scaffolding for experimenting with Azure Virtual Desktop (AVD) resources using Bicep at subscription scope.
 
-```powershell
-New-AzSubscriptionDeployment -Location eastus -Name "avd-deploy" -TemplateFile .\src\infra\main.bicep -TemplateParameterFile .\src\infra\main.bicepparam
-```
-
----
-
 ## 📋 Prerequisites
 
 Ensure the following are installed/configured:
@@ -17,19 +11,23 @@ Ensure the following are installed/configured:
 3. Azure PowerShell module (Az) or Azure CLI
 4. Access to an Azure subscription with permission to deploy at subscription scope (e.g. Owner or Contributor + Resource Group write)
 
-Login before deploying:
+## Quickstart
+
+1. Copy `example.bicepparam` to `main.bicepparam` and update parameter values as desired for your environment.
+
+2. Login before deploying:
 
 ```powershell
 Connect-AzAccount
 ```
 
-If you have multiple subscriptions:
+3. If you have multiple subscriptions:
 
 ```powershell
 Set-AzContext -Subscription <your-subscription-id-or-name>
 ```
 
-Run the deployment
+4. Run the deployment
 ```powershell
 New-AzSubscriptionDeployment -Location eastus -Name "avd-deploy" -TemplateFile .\src\infra\main.bicep -TemplateParameterFile .\src\infra\main.bicepparam
 ```
