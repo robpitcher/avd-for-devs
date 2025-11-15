@@ -1,8 +1,8 @@
 # Feature Specification: Azure Virtual Desktop Dev Environment (VS Code Published App)
 
-**Feature Branch**: `001-avd-dev-vscode`  
-**Created**: 2025-11-15  
-**Status**: Draft  
+**Feature Branch**: `001-avd-dev-vscode`
+**Created**: 2025-11-15
+**Status**: Draft
 **Input**: User description: "Azure Virtual Desktop dev environment with Entra ID auth, single host pool, latest Win11 multi-session custom image (VS Code added via Image Builder), publish VS Code remote app, exclude FSLogix, use Azure Verified Modules in Bicep"
 
 ## User Scenarios & Testing *(mandatory)*
@@ -11,7 +11,7 @@
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
   Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
   you should still have a viable MVP (Minimum Viable Product) that delivers value.
-  
+
   Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
   Think of each story as a standalone slice of functionality that can be:
   - Developed independently
