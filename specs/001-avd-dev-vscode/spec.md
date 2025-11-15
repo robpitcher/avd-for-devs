@@ -97,15 +97,13 @@ Additional user stories may be added for telemetry or developer tooling later; c
 - **FR-004**: Deployment MUST allow parameterized selection of VM size (default: cost-efficient general-purpose size) and host count (default: 1).
 - **FR-005**: Environment MUST exclude FSLogix configuration (explicitly out of scope) while still permitting roaming profiles via default mechanisms if needed.
 - **FR-006**: Access MUST be controlled via Entra ID group assignment to the application group; unassigned users MUST NOT see the app.
-- **FR-007**: Scaling operation MUST allow increasing or decreasing host count without manual per-host configuration (idempotent deployment).
-- **FR-008**: Image update process MUST allow rolling introduction (new hosts join using new image while existing sessions drain).
-- **FR-009**: Deployment artifacts MUST minimize cost by default (single host, modest VM size, no premium add-ons).
-- **FR-010**: Published app session MUST launch VS Code within 60 seconds of user selection under nominal load.
-- **FR-011**: Build process MUST surface clear status (success/failure) and retain latest successful image reference.
-- **FR-012**: Environment MUST provide a documented parameter or variable for region selection (default assumption: eastus for availability + cost).
-- **FR-013**: No Office apps will be included; image MUST not install Office 365 components.
-- **FR-014**: Security baseline MUST rely on default Windows 11 multi-session hardening + Entra ID conditional access (advanced policies out of current scope but can be layered later).
-- **FR-015**: Application group MUST be of RemoteApp type (not desktop) publishing only VS Code initially.
+- **FR-007**: Deployment artifacts MUST minimize cost by default (single host, modest VM size, no premium add-ons).
+- **FR-008**: Published app session MUST launch VS Code within 60 seconds of user selection under nominal load.
+- **FR-009**: Build process MUST surface clear status (success/failure) and retain latest successful image reference.
+- **FR-010**: Environment MUST provide a documented parameter or variable for region selection (default assumption: canadacentral for availability + cost).
+- **FR-011**: No Office apps will be included; image MUST not install Office 365 components.
+- **FR-012**: Security baseline MUST rely on default Windows 11 multi-session hardening + Entra ID conditional access (advanced policies out of current scope but can be layered later).
+- **FR-013**: Application group MUST be of RemoteApp type (not desktop) publishing only VS Code initially.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -137,7 +135,7 @@ Additional user stories may be added for telemetry or developer tooling later; c
 
 ## Assumptions
 
-- Region default: eastus (cost + availability) unless overridden.
+- Region default: canadacentral (cost + availability) unless overridden.
 - Concurrency target: 5 developers for PoC baseline; scaling beyond requires explicit sizing review.
 - VM size default assumption: Standard_D2s_v5 (or equivalent) for cost efficiency.
 - Load balancing strategy: breadth-first (maximize utilization of single host) unless policy requires depth-first later.
