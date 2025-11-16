@@ -12,9 +12,10 @@ This document describes the outputs from the AVD infrastructure deployment and t
 - **Example**: `/subscriptions/<sub-id>/resourceGroups/rg-avd-dev/providers/Microsoft.DesktopVirtualization/hostPools/dev-avd-hostpool`
 
 **Access**:
-```powershell
-$deployment = Get-AzSubscriptionDeployment -Name avd-deploy
-$hostPoolId = $deployment.Outputs.hostPoolId.Value
+```bash
+az deployment sub show \
+  --name avd-deploy-<timestamp> \
+  --query properties.outputs.hostPoolId.value -o tsv
 ```
 
 ---
@@ -26,8 +27,10 @@ $hostPoolId = $deployment.Outputs.hostPoolId.Value
 - **Example**: `/subscriptions/<sub-id>/resourceGroups/rg-avd-dev/providers/Microsoft.DesktopVirtualization/workspaces/dev-avd-ws`
 
 **Access**:
-```powershell
-$workspaceId = $deployment.Outputs.workspaceId.Value
+```bash
+az deployment sub show \
+  --name avd-deploy-<timestamp> \
+  --query properties.outputs.workspaceId.value -o tsv
 ```
 
 ---
@@ -39,8 +42,10 @@ $workspaceId = $deployment.Outputs.workspaceId.Value
 - **Example**: `/subscriptions/<sub-id>/resourceGroups/rg-avd-dev/providers/Microsoft.DesktopVirtualization/applicationGroups/dev-avd-appgrp`
 
 **Access**:
-```powershell
-$appGroupId = $deployment.Outputs.appGroupId.Value
+```bash
+az deployment sub show \
+  --name avd-deploy-<timestamp> \
+  --query properties.outputs.appGroupId.value -o tsv
 ```
 
 ---
@@ -53,41 +58,29 @@ $appGroupId = $deployment.Outputs.appGroupId.Value
 - **Security**: Do not store in logs or share publicly
 
 **Access**:
-```powershell
-$token = $deployment.Outputs.registrationToken.Value
+```bash
+az deployment sub show \
+  --name avd-deploy-<timestamp> \
+  --query properties.outputs.registrationToken.value -o tsv
 # Use immediately for host registration
 ```
 
 **Regeneration**:
-If expired, redeploy or use:
-```powershell
-Update-AzWvdHostPool -ResourceGroupName rg-avd-dev -Name dev-avd-hostpool -RegistrationInfoExpirationTime (Get-Date).AddHours(24)
-```
-
----
-
-### customImageName
-- **Type**: String
-- **Description**: Name of the custom managed image (if `imageBuilderEnabled = true`)
-- **Usage**: Reference for image versioning, rollback scenarios
-- **Example**: `devavd-202511151200` (timestamp format)
-
-**Access**:
-```powershell
-$imageName = $deployment.Outputs.customImageName.Value
-```
+If expired, redeploy or update the host pool to generate a new token.
 
 ---
 
 ### sessionHostNames
 - **Type**: Array of Strings
-- **Description**: Names of all deployed session host VMs
+- **Description**: Names of all deployed session host VMs provisioned from marketplace image
 - **Usage**: Inventory management, monitoring, troubleshooting
 - **Example**: `["avd-vm-000", "avd-vm-001"]`
 
 **Access**:
-```powershell
-$vmNames = $deployment.Outputs.sessionHostNames.Value
+```bash
+az deployment sub show \
+  --name avd-deploy-<timestamp> \
+  --query properties.outputs.sessionHostNames.value
 ```
 
 ## Module-Level Outputs
@@ -124,27 +117,40 @@ $vmNames = $deployment.Outputs.sessionHostNames.Value
 
 ## Using Outputs in Scripts
 
-### PowerShell Example: List All Session Hosts
-```powershell
-$deployment = Get-AzSubscriptionDeployment -Name avd-deploy
-$vmNames = $deployment.Outputs.sessionHostNames.Value
+### Azure CLI Example: List All Session Hosts
+```bash
+# Get deployment outputs
+SESSION_HOSTS=$(az deployment sub show \
+  --name avd-deploy-<timestamp> \
+  --query properties.outputs.sessionHostNames.value -o tsv)
 
-foreach ($vmName in $vmNames) {
-    Get-AzVM -ResourceGroupName rg-avd-dev -Name $vmName | Select-Object Name, Location, VmSize
-}
+# List VM details
+for VM_NAME in $SESSION_HOSTS; do
+  az vm show \
+    --resource-group rg-avd-dev \
+    --name $VM_NAME \
+    --query "{Name:name, Location:location, Size:hardwareProfile.vmSize}"
+done
 ```
 
-### PowerShell Example: Check Host Pool Status
-```powershell
-$deployment = Get-AzSubscriptionDeployment -Name avd-deploy
-$hostPoolId = $deployment.Outputs.hostPoolId.Value
+### Azure CLI Example: Check Host Pool Status
+```bash
+# Get host pool ID
+HOST_POOL_ID=$(az deployment sub show \
+  --name avd-deploy-<timestamp> \
+  --query properties.outputs.hostPoolId.value -o tsv)
 
-Get-AzWvdHostPool -ResourceId $hostPoolId | Format-List
+# Show host pool details
+az desktopvirtualization hostpool show \
+  --ids $HOST_POOL_ID \
+  --output table
 ```
 
 ### Azure CLI Example: Export Outputs to JSON
 ```bash
-az deployment sub show --name avd-deploy --query properties.outputs > outputs.json
+az deployment sub show \
+  --name avd-deploy-<timestamp> \
+  --query properties.outputs > outputs.json
 ```
 
 ## Security Considerations
@@ -164,14 +170,14 @@ az deployment sub show --name avd-deploy --query properties.outputs > outputs.js
 
 ## Troubleshooting
 
-**Issue**: Output not found
-**Solution**: Verify deployment completed successfully; check deployment name
+**Issue**: Output not found  
+**Solution**: Verify deployment completed successfully; check deployment name with `az deployment sub list`
 
-**Issue**: Registration token expired
-**Solution**: Redeploy or regenerate token using `Update-AzWvdHostPool`
+**Issue**: Registration token expired  
+**Solution**: Redeploy to generate a new token
 
-**Issue**: Session host names empty
-**Solution**: Check `hostCount` parameter; verify deployment logs for VM creation errors
+**Issue**: Session host names empty  
+**Solution**: Check `hostCount` parameter; verify deployment logs for VM creation errors using `az deployment sub show --name <deployment-name>`
 
 ## Related Documents
 - `quickstart.md` - Deployment procedures
