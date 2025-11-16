@@ -65,7 +65,7 @@ output hostPoolId string = hostPool.id
 output hostPoolName string = hostPool.name
 
 @description('The registration token for joining session hosts')
-output registrationToken string = hostPool.properties.registrationInfo.token
+output registrationToken string = hostPool.properties.registrationInfo.?token ?? ''
 
 @description('The token expiration time')
 output tokenExpirationTime string = tokenExpirationTime

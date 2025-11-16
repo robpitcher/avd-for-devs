@@ -46,7 +46,8 @@ New-AzSubscriptionDeployment `
   -Location canadacentral `
   -Name "avd-deploy-$(Get-Date -Format 'yyyyMMddHHmm')" `
   -TemplateFile .\src\infra\main.bicep `
-  -TemplateParameterFile .\src\infra\parameters\dev.bicepparam
+  -TemplateParameterFile .\src\infra\parameters\dev.bicepparam `
+  -adminPassword (ConvertTo-SecureString "hunter2" -AsPlainText -Force)
 ```
 
 **Deployment Time**: ~15-20 minutes (including session host provisioning)

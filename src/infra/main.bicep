@@ -174,7 +174,7 @@ module vscodeRemoteApp 'modules/remoteApp.bicep' = {
     remoteAppName: 'VSCode'
     displayName: remoteAppDisplayName
     commandPath: remoteAppCommandPath
-    appGroupName: appGroupName
+    appGroupName: appGroup.outputs.appGroupName
     appDescription: 'Visual Studio Code development environment'
   }
 }
@@ -246,7 +246,7 @@ output workspaceId string = workspace.outputs.workspaceId
 output appGroupId string = appGroup.outputs.appGroupId
 
 @description('Registration token (sensitive)')
-output registrationToken string = hostPool.outputs.registrationToken
+output registrationToken string = hostPool.outputs.registrationToken != null ? hostPool.outputs.registrationToken : ''
 
 @description('Custom image name (if enabled)')
 output customImageName string = imageBuilderEnabled ? '${imageNamePrefix}-timestamp' : 'marketplace'
