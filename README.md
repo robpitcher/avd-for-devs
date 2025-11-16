@@ -24,7 +24,7 @@ Infrastructure as Code (IaC) for deploying a low-cost Azure Virtual Desktop (AVD
 
 1. Copy the example parameter file:
    ```powershell
-   Copy-Item .\src\infra\example.bicepparam .\src\infra\parameters\dev.bicepparam
+   Copy-Item .\src\infra\parameters\example.bicepparam .\src\infra\parameters\dev.bicepparam
    ```
 
 2. Edit `dev.bicepparam`:

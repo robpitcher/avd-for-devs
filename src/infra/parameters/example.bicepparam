@@ -1,4 +1,4 @@
-using 'main.bicep'
+using '../main.bicep'
 
 // Location
 param location = 'canadacentral'
