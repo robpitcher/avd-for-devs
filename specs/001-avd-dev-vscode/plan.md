@@ -1,67 +1,37 @@
-# Implementation Plan: Azure Virtual Desktop Dev Environment (VS Code Published App)
+# Implementation Plan: AVD Dev Environment with VS Code RemoteApp
 
-**Branch**: `001-avd-dev-vscode` | **Date**: 2025-11-15 | **Spec**: `specs/001-avd-dev-vscode/spec.md`
-**Input**: Feature specification from `specs/001-avd-dev-vscode/spec.md`
+**Branch**: `001-avd-dev-vscode` | **Date**: 2025-11-15 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/001-avd-dev-vscode/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-Provision a low-cost Azure Virtual Desktop (AVD) proof-of-concept environment for developers: one host pool, single RemoteApp (Visual Studio Code), custom Windows 11 Enterprise multi-session image built via Azure Image Builder to pre-install VS Code, Entra ID group-based access, parameter-driven manual scaling (host count). Infrastructure delivered using Azure Bicep leveraging Azure Verified Modules (AVM) where available. Excludes FSLogix and Office to minimize cost and complexity.
+Deploy an Azure Virtual Desktop environment with Windows 11 Enterprise multi-session marketplace image, automated VS Code installation via custom script extension, Entra ID authentication, and RemoteApp publishing for cost-effective developer access.
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
-**Language/Version**: Azure Bicep (latest), PowerShell (Az module)
-**Primary Dependencies**: Azure Verified Modules (AVM) for Desktop Virtualization resources, Compute (VM), Network (VNet/Subnet); Azure Image Builder; winget (inside customization)
-**Storage**: N/A (no persistent app data; OS disk only)
-**Testing**: Manual validation + `az deployment what-if` for template drift; Potential future automated deployment test (NEEDS CLARIFICATION: decide if what-if gating becomes mandatory)
-**Target Platform**: Azure (canadacentral default region)
-**Project Type**: Single IaC project (infra only)
-**Performance Goals**: VS Code RemoteApp launch ≤ 60s (spec SC-001); Image build ≤ 20m end-to-end (spec SC-002)
-**Constraints**: Minimize cost (single D2s_v5 by default); No FSLogix; Keep template under ~300 lines excluding modules
-**Scale/Scope**: Baseline 5 concurrent devs; Param scaling to small number (1–3 hosts)
-
-Clarifications Needed:
-- AVM module names exact versions (NEEDS CLARIFICATION) – Phase 0
-- Exact base image reference for Windows 11 multi-session (NEEDS CLARIFICATION) – Phase 0
-- VS Code install method in Image Builder (winget vs direct download) (NEEDS CLARIFICATION) – Phase 0
-- Registration token lifecycle management strategy (rotate vs long-lived) (NEEDS CLARIFICATION) – Phase 0
-- what-if enforcement policy in CI (NEEDS CLARIFICATION) – Phase 0
-
-## Phase 0 Resolution Summary (Post-Research)
-Resolved clarifications:
-1. AVM modules: adopt latest stable; pin versions during implementation commit.
-2. Base image: `MicrosoftWindowsDesktop:Windows-11:win11-22h2-ent-multi-session`.
-3. VS Code install: winget `Microsoft.VisualStudioCode` in Image Builder PowerShell customizer.
-4. Registration token: short-lived (24h default) regenerated on scaling if expired.
-5. CI what-if: deferred; manual command documented in quickstart.
-
-No remaining blockers for Phase 1 deliverables.
+**Language/Version**: Bicep (Azure IaC), PowerShell 7.x
+**Primary Dependencies**: Azure Resource Manager, Azure Virtual Desktop service, Windows 11 Multi-session marketplace image
+**Storage**: N/A (VM managed disks only)
+**Testing**: Manual validation tests (see tests/ directory), Bicep what-if validation
+**Target Platform**: Azure Cloud (default region: canadacentral)
+**Project Type**: Infrastructure as Code (IaC) deployment
+**Performance Goals**: ≤ 20 min deployment, ≤ 60 sec app launch, 5 concurrent users on default VM
+**Constraints**: Cost minimization (<$50/month for single host part-time use), no FSLogix, RemoteApp only
+**Scale/Scope**: PoC-level (1-3 session hosts, 5-15 concurrent developers maximum)
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Constitution file is placeholder; provisional principles inferred for gating:
-1. Simplicity & Cost Efficiency – Single host pool, minimal services.
-2. Reproducibility – All infra declared; image customization scripted.
-3. Access Control – Entra ID group assignment only.
-4. Observability (minimal) – Deployment outputs + build logs accessible.
-5. Versioning – Image versions tagged; template parameters pinned.
+**Status**: ✅ PASS (No constitution file violations - using placeholder constitution template)
 
-Initial Gate Evaluation:
-- No unjustified complexity (PASS)
-- Clear scope boundaries documented (PASS)
-- Test strategy outlined (Manual + what-if; automation TBD) (PARTIAL – pending clarification)
-- All clarifications listed for Phase 0 resolution (PASS)
-
-Proceed to Phase 0 with noted clarifications.
+**Note**: Project does not have a populated constitution file (`.specify/memory/constitution.md` contains only template). No specific gates to enforce at this time. Standard best practices apply:
+- Cost optimization (minimize default deployment cost)
+- Security baseline (Entra ID auth, group-based access control)
+- Maintainability (modular Bicep, parameterized deployment)
+- Documentation (README, quickstart, test plans already present)
 
 ## Project Structure
 
@@ -78,40 +48,48 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-src/
-└── infra/
-  ├── main.bicep                # Entry point referencing modules
-  ├── image-builder.bicep       # Image Builder definition (or inline in main)
-  ├── modules/                  # AVM module wrappers / additions (if needed)
-  │   ├── hostpool.bicep
-  │   ├── workspace.bicep
-  │   ├── appGroup.bicep
-  │   ├── sessionHostVM.bicep
-  │   └── network.bicep
-  ├── parameters/               # Example parameter files
-  │   └── dev.bicepparam
-  └── scripts/                  # Image customizer scripts (PowerShell)
-    └── install-vscode.ps1
-
-tests/ (future)
-└── what-if/                      # Potential automation for validation
+avd-for-devs/
+├── src/infra/                  # Infrastructure as Code (Bicep)
+│   ├── main.bicep              # Main subscription-level template
+│   ├── modules/                # Modular Bicep components
+│   │   ├── network.bicep       # VNet and subnet
+│   │   ├── hostpool.bicep      # AVD host pool resource
+│   │   ├── workspace.bicep     # AVD workspace resource
+│   │   ├── appGroup.bicep      # Application group (RemoteApp)
+│   │   ├── workspace-association.bicep  # Links app group to workspace
+│   │   ├── remoteApp.bicep     # VS Code app publishing
+│   │   ├── sessionHostVM.bicep # Session host VMs with custom script extension
+│   │   └── role-assignment.bicep  # Entra ID group RBAC
+│   ├── parameters/             # Environment parameter files
+│   │   ├── dev.bicepparam      # Development environment config
+│   │   └── example.bicepparam  # Template for new environments
+│   └── scripts/                # VM customization scripts
+│       └── install-vscode.ps1  # VS Code installation via winget
+├── tests/                      # Manual validation test plans
+│   ├── US1-remoteapp-validation.md
+│   ├── US2-image-build-checklist.md  # (Needs update for script extension)
+│   ├── US3-scaling-validation.md
+│   └── success-criteria-report.md
+├── docs/                       # User-facing documentation
+│   ├── outputs.md
+│   ├── scaling-down.md
+│   └── security-checklist.md
+├── specs/001-avd-dev-vscode/   # This feature's specification
+│   ├── spec.md                 # Feature specification (updated)
+│   ├── plan.md                 # This implementation plan
+│   ├── research.md             # (To be generated - Phase 0)
+│   ├── data-model.md           # (To be generated - Phase 1)
+│   ├── quickstart.md           # (To be generated - Phase 1)
+│   └── contracts/              # (To be generated - Phase 1)
+├── scripts/                    # Repository automation
+│   └── validate-whatif.ps1     # Deployment validation script
+└── README.md                   # Project overview (updated)
 ```
 
-**Structure Decision**: Single IaC project under `src/infra` with modular decomposition for clarity & reuse; existing repository already contains `src/infra/main.bicep` which will be refactored to call AVM modules + image builder template + remote app definitions. Scripts added for image customization.
+**Structure Decision**: IaC-focused repository using Bicep modules pattern. Infrastructure code already exists and has been updated to use marketplace images with custom script extension instead of Azure Image Builder. Documentation and test plans need minor updates to reflect the script extension approach.
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+**Status**: N/A (No constitution violations to justify)

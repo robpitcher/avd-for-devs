@@ -41,15 +41,9 @@ param baseImageOffer string = 'Windows-11'
 @description('Base image SKU')
 param baseImageSku string = 'win11-22h2-ent-multi-session'
 
-// Custom Image Builder Configuration
-@description('Enable custom image builder')
-param imageBuilderEnabled bool = true
-
-@description('Winget package ID for VS Code')
-param vscodeWingetId string = 'Microsoft.VisualStudioCode'
-
-@description('Prefix for custom image names')
-param imageNamePrefix string = 'devavd'
+// VS Code Installation Script
+@description('URI to VS Code installation script')
+param vscodeInstallScriptUri string = 'https://raw.githubusercontent.com/robpitcher/avd-for-devs/main/src/infra/scripts/install-vscode.ps1'
 
 // Workspace and Application Group
 @description('Name of the AVD workspace')
@@ -190,31 +184,12 @@ module appGroupRoleAssignment 'modules/role-assignment.bicep' = {
   }
 }
 
-// Image reference (marketplace or custom)
-var useCustomImage = imageBuilderEnabled
-var imageReference = useCustomImage ? {
-  id: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroupName}/providers/Microsoft.Compute/images/${imageNamePrefix}-placeholder'
-} : {
+// Image reference (always use marketplace image)
+var imageReference = {
   publisher: baseImagePublisher
   offer: baseImageOffer
   sku: baseImageSku
   version: 'latest'
-}
-
-// Deploy custom image builder (if enabled)
-module imageBuilder 'modules/image-builder.bicep' = if (imageBuilderEnabled) {
-  scope: rgAvd
-  name: 'deploy-imagebuilder'
-  params: {
-    location: location
-    imageNamePrefix: imageNamePrefix
-    baseImagePublisher: baseImagePublisher
-    baseImageOffer: baseImageOffer
-    baseImageSku: baseImageSku
-    vscodeWingetId: vscodeWingetId
-    imageResourceGroup: resourceGroupName
-    tags: commonTags
-  }
 }
 
 // Deploy session host VMs
@@ -231,6 +206,7 @@ module sessionHosts 'modules/sessionHostVM.bicep' = [for i in range(0, hostCount
     subnetId: network.outputs.subnetId
     hostPoolToken: hostPool.outputs.registrationToken
     imageReference: imageReference
+    vscodeInstallScriptUri: vscodeInstallScriptUri
     tags: commonTags
   }
 }]
@@ -247,9 +223,6 @@ output appGroupId string = appGroup.outputs.appGroupId
 
 @description('Registration token (sensitive)')
 output registrationToken string = hostPool.outputs.registrationToken != null ? hostPool.outputs.registrationToken : ''
-
-@description('Custom image name (if enabled)')
-output customImageName string = imageBuilderEnabled ? '${imageNamePrefix}-timestamp' : 'marketplace'
 
 @description('Session host VM names')
 output sessionHostNames array = [for i in range(0, hostCount): sessionHosts[i].outputs.vmName]

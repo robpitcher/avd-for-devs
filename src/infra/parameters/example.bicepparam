@@ -21,10 +21,9 @@ param baseImagePublisher = 'MicrosoftWindowsDesktop'
 param baseImageOffer = 'Windows-11'
 param baseImageSku = 'win11-22h2-ent-multi-session'
 
-// Custom Image Builder Configuration
-param imageBuilderEnabled = true
-param vscodeWingetId = 'Microsoft.VisualStudioCode'
-param imageNamePrefix = 'devavd'
+// VS Code Installation Script
+// Note: Update this URI if you host the script in a storage account or custom location
+param vscodeInstallScriptUri = 'https://raw.githubusercontent.com/robpitcher/avd-for-devs/main/src/infra/scripts/install-vscode.ps1'
 
 // Workspace and Application Group
 param workspaceName = 'dev-avd-ws'

@@ -30,6 +30,9 @@ param hostPoolToken string
 @description('Image reference object')
 param imageReference object
 
+@description('URI to VS Code installation script')
+param vscodeInstallScriptUri string
+
 @description('Tags to apply to resources')
 param tags object = {}
 
@@ -110,13 +113,37 @@ resource avdAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
     typeHandlerVersion: '2.73'
     autoUpgradeMinorVersion: true
     settings: {
-      modulesUrl: 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_06-15-2022.zip'
+      modulesUrl: 'https://wvdportalstorageblob.blob.${environment().suffixes.storage}/galleryartifacts/Configuration_06-15-2022.zip'
       configurationFunction: 'Configuration.ps1\\AddSessionHost'
       properties: {
         hostPoolName: split(split(hostPoolToken, '"hostPoolName":"')[1], '"')[0]
         registrationInfoToken: hostPoolToken
         aadJoin: false
       }
+    }
+  }
+}
+
+// VS Code Installation Extension - runs after AVD agent registration
+resource vscodeInstall 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+  parent: vm
+  name: 'InstallVSCode'
+  location: location
+  dependsOn: [
+    avdAgent
+  ]
+  properties: {
+    publisher: 'Microsoft.Compute'
+    type: 'CustomScriptExtension'
+    typeHandlerVersion: '1.10'
+    autoUpgradeMinorVersion: true
+    settings: {
+      fileUris: [
+        vscodeInstallScriptUri
+      ]
+    }
+    protectedSettings: {
+      commandToExecute: 'powershell -ExecutionPolicy Unrestricted -File install-vscode.ps1'
     }
   }
 }

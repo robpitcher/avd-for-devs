@@ -5,7 +5,8 @@ Infrastructure as Code (IaC) for deploying a low-cost Azure Virtual Desktop (AVD
 ## 🎯 Features
 
 - **VS Code RemoteApp**: Pre-configured Visual Studio Code published as RemoteApp
-- **Custom Image**: Windows 11 Enterprise multi-session with VS Code pre-installed via Azure Image Builder
+- **Marketplace Image**: Windows 11 Enterprise multi-session from Azure Marketplace
+- **Automated Installation**: VS Code installed automatically via custom script extension during VM provisioning
 - **Group-Based Access**: Entra ID group assignment for secure, managed access
 - **Manual Scaling**: Parameter-driven scaling (adjust `hostCount` to scale up/down)
 - **Cost-Optimized**: Single D2s_v5 session host by default; pay-as-you-go model
@@ -31,6 +32,7 @@ Infrastructure as Code (IaC) for deploying a low-cost Azure Virtual Desktop (AVD
    - Set `entraIdGroupObjectId` to your security group's Object ID
    - Update `adminPassword` (will prompt during deployment for security)
    - Adjust `location` if needed (default: `canadacentral`)
+   - Optional: Update `vscodeInstallScriptUri` if hosting the script in your own storage account
 
 ### Step 2: Login to Azure
 
@@ -50,7 +52,7 @@ New-AzSubscriptionDeployment `
   -adminPassword (ConvertTo-SecureString "hunter2" -AsPlainText -Force)
 ```
 
-**Deployment Time**: ~15-20 minutes (including session host provisioning)
+**Deployment Time**: ~10-15 minutes (including VM provisioning and VS Code installation)
 
 ### Step 4: Access VS Code RemoteApp
 
@@ -167,14 +169,16 @@ Full security review: [docs/security-checklist.md](docs/security-checklist.md)
 │  Virtual Network (dev-avd-vnet)                        │
 │  └── Subnet (dev-avd-subnet)                           │
 │      ├── Session Host VM 1 (avd-vm-000)                │
+│      │   └── Custom Script Extension (Install VSCode)  │
 │      ├── Session Host VM 2 (avd-vm-001) [if scaled]    │
+│      │   └── Custom Script Extension (Install VSCode)  │
 │      └── ...                                            │
 └─────────────────────────────────────────────────────────┘
                         │
                         ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Custom Image (optional)                               │
-│  └── Windows 11 Enterprise multi-session + VS Code     │
+│  Marketplace Image                                     │
+│  └── Windows 11 Enterprise multi-session (latest)     │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -190,13 +194,12 @@ avd-for-devs/
 │   │   ├── workspace.bicep     # AVD workspace
 │   │   ├── appGroup.bicep      # Application group
 │   │   ├── remoteApp.bicep     # RemoteApp publishing
-│   │   ├── sessionHostVM.bicep # Session host VMs
-│   │   ├── image-builder.bicep # Custom image (optional)
+│   │   ├── sessionHostVM.bicep # Session host VMs with custom script extension
 │   │   └── role-assignment.bicep # Access control
 │   ├── parameters/             # Parameter files
 │   │   └── dev.bicepparam      # Development environment
 │   └── scripts/                # Customization scripts
-│       └── install-vscode.ps1  # VS Code winget installer
+│       └── install-vscode.ps1  # VS Code installation via winget
 ├── docs/                       # Documentation
 │   ├── outputs.md              # Deployment outputs guide
 │   ├── scaling-down.md         # Scale-down procedures
