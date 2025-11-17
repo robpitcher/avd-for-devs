@@ -32,14 +32,14 @@ param adminUsername string
 param adminPassword string
 
 // Base Image Configuration
-@description('Base image publisher')
-param baseImagePublisher string = 'MicrosoftWindowsDesktop'
+@description('Base image publisher (Windows 11 AVD optimized)')
+param baseImagePublisher string = 'microsoftwindowsdesktop'
 
-@description('Base image offer')
-param baseImageOffer string = 'Windows-11'
+@description('Base image offer (Windows 11)')
+param baseImageOffer string = 'windows-11'
 
-@description('Base image SKU')
-param baseImageSku string = 'win11-22h2-ent-multi-session'
+@description('Base image SKU (multi-session AVD image)')
+param baseImageSku string = 'win11-24h2-avd'
 
 // VS Code Installation Script
 @description('URI to VS Code installation script')
