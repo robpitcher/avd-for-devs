@@ -205,6 +205,7 @@ module sessionHosts 'modules/sessionHostVM.bicep' = [for i in range(0, hostCount
     adminPassword: adminPassword
     subnetId: network.outputs.subnetId
     hostPoolToken: hostPool.outputs.registrationToken
+    hostPoolName: hostPoolName
     imageReference: imageReference
     vscodeInstallScriptUri: vscodeInstallScriptUri
     tags: commonTags

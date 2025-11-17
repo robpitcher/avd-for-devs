@@ -27,6 +27,9 @@ param subnetId string
 @secure()
 param hostPoolToken string
 
+@description('Host pool name (passed directly instead of parsing token)')
+param hostPoolName string
+
 @description('Image reference object')
 param imageReference object
 
@@ -116,7 +119,7 @@ resource avdAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
       modulesUrl: 'https://wvdportalstorageblob.blob.${environment().suffixes.storage}/galleryartifacts/Configuration_06-15-2022.zip'
       configurationFunction: 'Configuration.ps1\\AddSessionHost'
       properties: {
-        hostPoolName: split(split(hostPoolToken, '"hostPoolName":"')[1], '"')[0]
+        hostPoolName: hostPoolName
         registrationInfoToken: hostPoolToken
         aadJoin: false
       }
