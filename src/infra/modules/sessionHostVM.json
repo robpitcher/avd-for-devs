@@ -1,0 +1,192 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.38.33.27573",
+      "templateHash": "3199497976957213655"
+    }
+  },
+  "parameters": {
+    "vmNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The name prefix for the session host VM"
+      }
+    },
+    "vmIndex": {
+      "type": "int",
+      "metadata": {
+        "description": "The index number for this session host"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The location for the VM"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v5",
+      "metadata": {
+        "description": "The VM size"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password"
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The subnet ID where the VM will be placed"
+      }
+    },
+    "hostPoolToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Host pool registration token"
+      }
+    },
+    "hostPoolName": {
+      "type": "string",
+      "metadata": {
+        "description": "Host pool name (passed directly instead of parsing token)"
+      }
+    },
+    "imageReference": {
+      "type": "object",
+      "metadata": {
+        "description": "Image reference object"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Tags to apply to resources"
+      }
+    }
+  },
+  "variables": {
+    "vmName": "[format('{0}-{1}', parameters('vmNamePrefix'), padLeft(parameters('vmIndex'), 3, '0'))]",
+    "nicName": "[format('{0}-nic', variables('vmName'))]",
+    "osDiskName": "[format('{0}-osdisk', variables('vmName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-11-01",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('imageReference')]",
+          "osDisk": {
+            "name": "[variables('osDiskName')]",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
+          }
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "enableAutomaticUpdates": true,
+            "patchSettings": {
+              "patchMode": "AutomaticByOS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        },
+        "licenseType": "Windows_Client"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', variables('vmName'), 'Microsoft.PowerShell.DSC')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.73",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesUrl": "[format('https://wvdportalstorageblob.blob.{0}/galleryartifacts/Configuration_06-15-2022.zip', environment().suffixes.storage)]",
+          "configurationFunction": "Configuration.ps1\\AddSessionHost",
+          "properties": {
+            "hostPoolName": "[parameters('hostPoolName')]",
+            "registrationInfoToken": "[parameters('hostPoolToken')]",
+            "aadJoin": false
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "vmId": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource ID of the VM"
+      },
+      "value": "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the VM"
+      },
+      "value": "[variables('vmName')]"
+    }
+  }
+}
