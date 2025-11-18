@@ -75,6 +75,12 @@ module vm 'br/public:avm/res/compute/virtual-machine:0.20.0' = {
     licenseType: 'Windows_Client'
     patchMode: 'AutomaticByOS'
     enableAutomaticUpdates: true
+    managedIdentities: {
+      systemAssigned: true
+    }
+    extensionAadJoinConfig: {
+      enabled: true
+    }
     extensionDSCConfig: {
       enabled: true
       settings: {
@@ -83,7 +89,7 @@ module vm 'br/public:avm/res/compute/virtual-machine:0.20.0' = {
         properties: {
           hostPoolName: hostPoolName
           registrationInfoToken: hostPoolToken
-          aadJoin: false
+          aadJoin: true
         }
       }
     }
