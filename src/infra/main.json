@@ -1,0 +1,1322 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.38.33.27573",
+      "templateHash": "137015072183703076"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure region for resources"
+      }
+    },
+    "hostPoolName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the host pool"
+      }
+    },
+    "loadBalancingStrategy": {
+      "type": "string",
+      "defaultValue": "BreadthFirst",
+      "allowedValues": [
+        "BreadthFirst",
+        "DepthFirst"
+      ],
+      "metadata": {
+        "description": "Load balancing strategy"
+      }
+    },
+    "maxSessionsPerHost": {
+      "type": "int",
+      "defaultValue": 10,
+      "minValue": 1,
+      "metadata": {
+        "description": "Maximum sessions per host"
+      }
+    },
+    "hostCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "Number of session host VMs to create"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v5",
+      "metadata": {
+        "description": "VM size for session hosts"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username for session hosts"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for session hosts"
+      }
+    },
+    "baseImagePublisher": {
+      "type": "string",
+      "defaultValue": "microsoftwindowsdesktop",
+      "metadata": {
+        "description": "Base image publisher (Windows 11 AVD optimized)"
+      }
+    },
+    "baseImageOffer": {
+      "type": "string",
+      "defaultValue": "windows-11",
+      "metadata": {
+        "description": "Base image offer (Windows 11)"
+      }
+    },
+    "baseImageSku": {
+      "type": "string",
+      "defaultValue": "win11-24h2-avd",
+      "metadata": {
+        "description": "Base image SKU (multi-session AVD image)"
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the AVD workspace"
+      }
+    },
+    "appGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the application group"
+      }
+    },
+    "remoteAppDisplayName": {
+      "type": "string",
+      "defaultValue": "Visual Studio Code",
+      "metadata": {
+        "description": "Display name for the RemoteApp"
+      }
+    },
+    "remoteAppCommandPath": {
+      "type": "string",
+      "defaultValue": "C:\\Program Files\\Microsoft VS Code\\Code.exe",
+      "metadata": {
+        "description": "Command path for the RemoteApp"
+      }
+    },
+    "entraIdGroupObjectId": {
+      "type": "string",
+      "metadata": {
+        "description": "Entra ID group Object ID for access assignment"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network name"
+      }
+    },
+    "vnetAddressPrefixes": {
+      "type": "array",
+      "defaultValue": [
+        "10.20.0.0/16"
+      ],
+      "metadata": {
+        "description": "Virtual network address prefixes"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet name"
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet address prefix"
+      }
+    },
+    "registrationTokenExpirationHours": {
+      "type": "int",
+      "defaultValue": 24,
+      "minValue": 1,
+      "metadata": {
+        "description": "Registration token expiration in hours"
+      }
+    }
+  },
+  "variables": {
+    "commonTags": {
+      "environment": "dev",
+      "feature": "avd-vscode",
+      "managedBy": "bicep"
+    },
+    "resourceGroupName": "rg-avd-dev",
+    "imageReference": {
+      "publisher": "[parameters('baseImagePublisher')]",
+      "offer": "[parameters('baseImageOffer')]",
+      "sku": "[parameters('baseImageSku')]",
+      "version": "latest"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2024-03-01",
+      "name": "[variables('resourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-network",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "vnetAddressPrefixes": {
+            "value": "[parameters('vnetAddressPrefixes')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "subnetAddressPrefix": {
+            "value": "[parameters('subnetAddressPrefix')]"
+          },
+          "tags": {
+            "value": "[variables('commonTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "10799731208131871232"
+            }
+          },
+          "parameters": {
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the virtual network"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location for the virtual network"
+              }
+            },
+            "vnetAddressPrefixes": {
+              "type": "array",
+              "defaultValue": [
+                "10.20.0.0/16"
+              ],
+              "metadata": {
+                "description": "The address prefixes for the virtual network"
+              }
+            },
+            "subnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the subnet"
+              }
+            },
+            "subnetAddressPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The address prefix for the subnet"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-11-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": "[parameters('vnetAddressPrefixes')]"
+                },
+                "subnets": [
+                  {
+                    "name": "[parameters('subnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('subnetAddressPrefix')]"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the virtual network"
+              },
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            },
+            "subnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the subnet"
+              },
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2023-11-01').subnets[0].id]"
+            },
+            "subnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the subnet"
+              },
+              "value": "[parameters('subnetName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-hostpool",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "hostPoolName": {
+            "value": "[parameters('hostPoolName')]"
+          },
+          "loadBalancingStrategy": {
+            "value": "[parameters('loadBalancingStrategy')]"
+          },
+          "maxSessionsPerHost": {
+            "value": "[parameters('maxSessionsPerHost')]"
+          },
+          "registrationTokenExpirationHours": {
+            "value": "[parameters('registrationTokenExpirationHours')]"
+          },
+          "tags": {
+            "value": "[variables('commonTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "11480190398764415464"
+            }
+          },
+          "parameters": {
+            "hostPoolName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the host pool"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location for the host pool"
+              }
+            },
+            "friendlyName": {
+              "type": "string",
+              "defaultValue": "AVD Development Host Pool",
+              "metadata": {
+                "description": "Friendly name for the host pool"
+              }
+            },
+            "loadBalancingStrategy": {
+              "type": "string",
+              "defaultValue": "BreadthFirst",
+              "allowedValues": [
+                "BreadthFirst",
+                "DepthFirst"
+              ],
+              "metadata": {
+                "description": "Load balancing strategy"
+              }
+            },
+            "maxSessionsPerHost": {
+              "type": "int",
+              "defaultValue": 10,
+              "minValue": 1,
+              "metadata": {
+                "description": "Maximum sessions per host"
+              }
+            },
+            "hostPoolType": {
+              "type": "string",
+              "defaultValue": "Pooled",
+              "metadata": {
+                "description": "Host pool type"
+              }
+            },
+            "preferredAppGroupType": {
+              "type": "string",
+              "defaultValue": "RailApplications",
+              "metadata": {
+                "description": "Preferred app group type"
+              }
+            },
+            "registrationTokenExpirationHours": {
+              "type": "int",
+              "defaultValue": 24,
+              "minValue": 1,
+              "metadata": {
+                "description": "Registration token expiration in hours"
+              }
+            },
+            "currentTime": {
+              "type": "string",
+              "defaultValue": "[utcNow()]",
+              "metadata": {
+                "description": "Current UTC time for token expiration calculation"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            }
+          },
+          "variables": {
+            "tokenExpirationTime": "[dateTimeAdd(parameters('currentTime'), format('PT{0}H', parameters('registrationTokenExpirationHours')))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DesktopVirtualization/hostPools",
+              "apiVersion": "2023-09-05",
+              "name": "[parameters('hostPoolName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "friendlyName": "[parameters('friendlyName')]",
+                "hostPoolType": "[parameters('hostPoolType')]",
+                "loadBalancerType": "[parameters('loadBalancingStrategy')]",
+                "maxSessionLimit": "[parameters('maxSessionsPerHost')]",
+                "preferredAppGroupType": "[parameters('preferredAppGroupType')]",
+                "registrationInfo": {
+                  "expirationTime": "[variables('tokenExpirationTime')]",
+                  "registrationTokenOperation": "Update"
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "hostPoolId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the host pool"
+              },
+              "value": "[resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName'))]"
+            },
+            "hostPoolName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the host pool"
+              },
+              "value": "[parameters('hostPoolName')]"
+            },
+            "registrationToken": {
+              "type": "string",
+              "metadata": {
+                "description": "The registration token for joining session hosts"
+              },
+              "value": "[listRegistrationTokens(resourceId('Microsoft.DesktopVirtualization/hostPools', parameters('hostPoolName')), '2023-09-05').value[0].token]"
+            },
+            "tokenExpirationTime": {
+              "type": "string",
+              "metadata": {
+                "description": "The token expiration time"
+              },
+              "value": "[variables('tokenExpirationTime')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-workspace",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workspaceName": {
+            "value": "[parameters('workspaceName')]"
+          },
+          "tags": {
+            "value": "[variables('commonTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "10406818501873472406"
+            }
+          },
+          "parameters": {
+            "workspaceName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the workspace"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location for the workspace"
+              }
+            },
+            "friendlyName": {
+              "type": "string",
+              "defaultValue": "AVD Development Workspace",
+              "metadata": {
+                "description": "Friendly name for the workspace"
+              }
+            },
+            "workspaceDescription": {
+              "type": "string",
+              "defaultValue": "Workspace for AVD development environment",
+              "metadata": {
+                "description": "Description of the workspace"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DesktopVirtualization/workspaces",
+              "apiVersion": "2023-09-05",
+              "name": "[parameters('workspaceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "friendlyName": "[parameters('friendlyName')]",
+                "description": "[parameters('workspaceDescription')]"
+              }
+            }
+          ],
+          "outputs": {
+            "workspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the workspace"
+              },
+              "value": "[resourceId('Microsoft.DesktopVirtualization/workspaces', parameters('workspaceName'))]"
+            },
+            "workspaceName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the workspace"
+              },
+              "value": "[parameters('workspaceName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-appgroup",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "appGroupName": {
+            "value": "[parameters('appGroupName')]"
+          },
+          "hostPoolId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-hostpool'), '2025-04-01').outputs.hostPoolId.value]"
+          },
+          "tags": {
+            "value": "[variables('commonTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "17145185664833326501"
+            }
+          },
+          "parameters": {
+            "appGroupName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the application group"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location for the application group"
+              }
+            },
+            "hostPoolId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the host pool"
+              }
+            },
+            "friendlyName": {
+              "type": "string",
+              "defaultValue": "AVD Development Apps",
+              "metadata": {
+                "description": "Friendly name for the application group"
+              }
+            },
+            "appGroupDescription": {
+              "type": "string",
+              "defaultValue": "Application group for development tools",
+              "metadata": {
+                "description": "Description of the application group"
+              }
+            },
+            "applicationGroupType": {
+              "type": "string",
+              "defaultValue": "RemoteApp",
+              "allowedValues": [
+                "RemoteApp",
+                "Desktop"
+              ],
+              "metadata": {
+                "description": "Application group type"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DesktopVirtualization/applicationGroups",
+              "apiVersion": "2023-09-05",
+              "name": "[parameters('appGroupName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "friendlyName": "[parameters('friendlyName')]",
+                "description": "[parameters('appGroupDescription')]",
+                "applicationGroupType": "[parameters('applicationGroupType')]",
+                "hostPoolArmPath": "[parameters('hostPoolId')]"
+              }
+            }
+          ],
+          "outputs": {
+            "appGroupId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the application group"
+              },
+              "value": "[resourceId('Microsoft.DesktopVirtualization/applicationGroups', parameters('appGroupName'))]"
+            },
+            "appGroupName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the application group"
+              },
+              "value": "[parameters('appGroupName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-hostpool')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-workspace-association",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workspaceName": {
+            "value": "[parameters('workspaceName')]"
+          },
+          "applicationGroupIds": {
+            "value": [
+              "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-appgroup'), '2025-04-01').outputs.appGroupId.value]"
+            ]
+          },
+          "tags": {
+            "value": "[variables('commonTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "11034359727428228410"
+            }
+          },
+          "parameters": {
+            "workspaceName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the workspace"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location of the workspace"
+              }
+            },
+            "friendlyName": {
+              "type": "string",
+              "defaultValue": "AVD Development Workspace",
+              "metadata": {
+                "description": "The friendly name of the workspace"
+              }
+            },
+            "workspaceDescription": {
+              "type": "string",
+              "defaultValue": "Workspace for AVD development environment",
+              "metadata": {
+                "description": "The description of the workspace"
+              }
+            },
+            "applicationGroupIds": {
+              "type": "array",
+              "metadata": {
+                "description": "Array of application group resource IDs to associate"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DesktopVirtualization/workspaces",
+              "apiVersion": "2023-09-05",
+              "name": "[parameters('workspaceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "applicationGroupReferences": "[parameters('applicationGroupIds')]",
+                "friendlyName": "[parameters('friendlyName')]",
+                "description": "[parameters('workspaceDescription')]"
+              }
+            }
+          ],
+          "outputs": {
+            "workspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Updated workspace resource ID"
+              },
+              "value": "[resourceId('Microsoft.DesktopVirtualization/workspaces', parameters('workspaceName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-appgroup')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-vscode-remoteapp",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "remoteAppName": {
+            "value": "VSCode"
+          },
+          "displayName": {
+            "value": "[parameters('remoteAppDisplayName')]"
+          },
+          "commandPath": {
+            "value": "[parameters('remoteAppCommandPath')]"
+          },
+          "appGroupName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-appgroup'), '2025-04-01').outputs.appGroupName.value]"
+          },
+          "appDescription": {
+            "value": "Visual Studio Code development environment"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "10175100945521547797"
+            }
+          },
+          "parameters": {
+            "remoteAppName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the RemoteApp"
+              }
+            },
+            "displayName": {
+              "type": "string",
+              "metadata": {
+                "description": "The display name for the RemoteApp"
+              }
+            },
+            "commandPath": {
+              "type": "string",
+              "metadata": {
+                "description": "The command path for the application"
+              }
+            },
+            "appGroupName": {
+              "type": "string",
+              "metadata": {
+                "description": "The application group name where this app will be published"
+              }
+            },
+            "appDescription": {
+              "type": "string",
+              "defaultValue": "RemoteApp published via Azure Virtual Desktop",
+              "metadata": {
+                "description": "Description of the RemoteApp"
+              }
+            },
+            "commandLineArguments": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Command line arguments (optional)"
+              }
+            },
+            "showInPortal": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Show in portal"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DesktopVirtualization/applicationGroups/applications",
+              "apiVersion": "2023-09-05",
+              "name": "[format('{0}/{1}', parameters('appGroupName'), parameters('remoteAppName'))]",
+              "properties": {
+                "description": "[parameters('appDescription')]",
+                "friendlyName": "[parameters('displayName')]",
+                "filePath": "[parameters('commandPath')]",
+                "commandLineSetting": "DoNotAllow",
+                "commandLineArguments": "[parameters('commandLineArguments')]",
+                "showInPortal": "[parameters('showInPortal')]",
+                "applicationType": "InBuilt"
+              }
+            }
+          ],
+          "outputs": {
+            "remoteAppId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the RemoteApp"
+              },
+              "value": "[resourceId('Microsoft.DesktopVirtualization/applicationGroups/applications', split(format('{0}/{1}', parameters('appGroupName'), parameters('remoteAppName')), '/')[0], split(format('{0}/{1}', parameters('appGroupName'), parameters('remoteAppName')), '/')[1])]"
+            },
+            "remoteAppName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the RemoteApp"
+              },
+              "value": "[format('{0}/{1}', parameters('appGroupName'), parameters('remoteAppName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-appgroup')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-appgroup-assignment",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appGroupId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-appgroup'), '2025-04-01').outputs.appGroupId.value]"
+          },
+          "principalId": {
+            "value": "[parameters('entraIdGroupObjectId')]"
+          },
+          "principalType": {
+            "value": "Group"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "13126590298218272829"
+            }
+          },
+          "parameters": {
+            "appGroupId": {
+              "type": "string",
+              "metadata": {
+                "description": "The application group resource ID"
+              }
+            },
+            "principalId": {
+              "type": "string",
+              "metadata": {
+                "description": "The Entra ID principal (user or group) Object ID"
+              }
+            },
+            "principalType": {
+              "type": "string",
+              "defaultValue": "Group",
+              "allowedValues": [
+                "User",
+                "Group",
+                "ServicePrincipal"
+              ],
+              "metadata": {
+                "description": "The principal type"
+              }
+            }
+          },
+          "variables": {
+            "desktopVirtualizationUserRoleId": "1d18fff3-a72a-46b5-b4a9-0b38a3cd7e63"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.DesktopVirtualization/applicationGroups/{0}', last(split(parameters('appGroupId'), '/')))]",
+              "name": "[guid(parameters('appGroupId'), parameters('principalId'), variables('desktopVirtualizationUserRoleId'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('desktopVirtualizationUserRoleId'))]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "[parameters('principalType')]"
+              }
+            }
+          ],
+          "outputs": {
+            "roleAssignmentId": {
+              "type": "string",
+              "metadata": {
+                "description": "The role assignment resource ID"
+              },
+              "value": "[extensionResourceId(resourceId('Microsoft.DesktopVirtualization/applicationGroups', last(split(parameters('appGroupId'), '/'))), 'Microsoft.Authorization/roleAssignments', guid(parameters('appGroupId'), parameters('principalId'), variables('desktopVirtualizationUserRoleId')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-appgroup')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "sessionHosts",
+        "count": "[length(range(0, parameters('hostCount')))]"
+      },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('deploy-sessionhost-{0}', range(0, parameters('hostCount'))[copyIndex()])]",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmNamePrefix": {
+            "value": "avd-vm"
+          },
+          "vmIndex": {
+            "value": "[range(0, parameters('hostCount'))[copyIndex()]]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "subnetId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-network'), '2025-04-01').outputs.subnetId.value]"
+          },
+          "hostPoolToken": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-hostpool'), '2025-04-01').outputs.registrationToken.value]"
+          },
+          "hostPoolName": {
+            "value": "[parameters('hostPoolName')]"
+          },
+          "imageReference": {
+            "value": "[variables('imageReference')]"
+          },
+          "tags": {
+            "value": "[variables('commonTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "3199497976957213655"
+            }
+          },
+          "parameters": {
+            "vmNamePrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The name prefix for the session host VM"
+              }
+            },
+            "vmIndex": {
+              "type": "int",
+              "metadata": {
+                "description": "The index number for this session host"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location for the VM"
+              }
+            },
+            "vmSize": {
+              "type": "string",
+              "defaultValue": "Standard_D2s_v5",
+              "metadata": {
+                "description": "The VM size"
+              }
+            },
+            "adminUsername": {
+              "type": "string",
+              "metadata": {
+                "description": "Admin username"
+              }
+            },
+            "adminPassword": {
+              "type": "securestring",
+              "metadata": {
+                "description": "Admin password"
+              }
+            },
+            "subnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "The subnet ID where the VM will be placed"
+              }
+            },
+            "hostPoolToken": {
+              "type": "securestring",
+              "metadata": {
+                "description": "Host pool registration token"
+              }
+            },
+            "hostPoolName": {
+              "type": "string",
+              "metadata": {
+                "description": "Host pool name (passed directly instead of parsing token)"
+              }
+            },
+            "imageReference": {
+              "type": "object",
+              "metadata": {
+                "description": "Image reference object"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            }
+          },
+          "variables": {
+            "vmName": "[format('{0}-{1}', parameters('vmNamePrefix'), padLeft(parameters('vmIndex'), 3, '0'))]",
+            "nicName": "[format('{0}-nic', variables('vmName'))]",
+            "osDiskName": "[format('{0}-osdisk', variables('vmName'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2023-11-01",
+              "name": "[variables('nicName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "subnet": {
+                        "id": "[parameters('subnetId')]"
+                      },
+                      "privateIPAllocationMethod": "Dynamic"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2023-09-01",
+              "name": "[variables('vmName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                  "imageReference": "[parameters('imageReference')]",
+                  "osDisk": {
+                    "name": "[variables('osDiskName')]",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "Premium_LRS"
+                    }
+                  }
+                },
+                "osProfile": {
+                  "computerName": "[variables('vmName')]",
+                  "adminUsername": "[parameters('adminUsername')]",
+                  "adminPassword": "[parameters('adminPassword')]",
+                  "windowsConfiguration": {
+                    "enableAutomaticUpdates": true,
+                    "patchSettings": {
+                      "patchMode": "AutomaticByOS"
+                    }
+                  }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                    }
+                  ]
+                },
+                "licenseType": "Windows_Client"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2023-09-01",
+              "name": "[format('{0}/{1}', variables('vmName'), 'Microsoft.PowerShell.DSC')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.73",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "modulesUrl": "[format('https://wvdportalstorageblob.blob.{0}/galleryartifacts/Configuration_06-15-2022.zip', environment().suffixes.storage)]",
+                  "configurationFunction": "Configuration.ps1\\AddSessionHost",
+                  "properties": {
+                    "hostPoolName": "[parameters('hostPoolName')]",
+                    "registrationInfoToken": "[parameters('hostPoolToken')]",
+                    "aadJoin": false
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vmId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the VM"
+              },
+              "value": "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+            },
+            "vmName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the VM"
+              },
+              "value": "[variables('vmName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-hostpool')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-network')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "hostPoolId": {
+      "type": "string",
+      "metadata": {
+        "description": "Host pool resource ID"
+      },
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-hostpool'), '2025-04-01').outputs.hostPoolId.value]"
+    },
+    "workspaceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Workspace resource ID"
+      },
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-workspace'), '2025-04-01').outputs.workspaceId.value]"
+    },
+    "appGroupId": {
+      "type": "string",
+      "metadata": {
+        "description": "Application group resource ID"
+      },
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-appgroup'), '2025-04-01').outputs.appGroupId.value]"
+    },
+    "registrationToken": {
+      "type": "string",
+      "metadata": {
+        "description": "Registration token (sensitive)"
+      },
+      "value": "[if(not(equals(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-hostpool'), '2025-04-01').outputs.registrationToken.value, null())), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-hostpool'), '2025-04-01').outputs.registrationToken.value, '')]"
+    },
+    "sessionHostNames": {
+      "type": "array",
+      "metadata": {
+        "description": "Session host VM names"
+      },
+      "copy": {
+        "count": "[length(range(0, parameters('hostCount')))]",
+        "input": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', format('deploy-sessionhost-{0}', range(0, parameters('hostCount'))[range(0, parameters('hostCount'))[copyIndex()]])), '2025-04-01').outputs.vmName.value]"
+      }
+    }
+  }
+}

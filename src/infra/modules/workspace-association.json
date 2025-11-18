@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.38.33.27573",
+      "templateHash": "11034359727428228410"
+    }
+  },
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the workspace"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of the workspace"
+      }
+    },
+    "friendlyName": {
+      "type": "string",
+      "defaultValue": "AVD Development Workspace",
+      "metadata": {
+        "description": "The friendly name of the workspace"
+      }
+    },
+    "workspaceDescription": {
+      "type": "string",
+      "defaultValue": "Workspace for AVD development environment",
+      "metadata": {
+        "description": "The description of the workspace"
+      }
+    },
+    "applicationGroupIds": {
+      "type": "array",
+      "metadata": {
+        "description": "Array of application group resource IDs to associate"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Tags to apply to resources"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DesktopVirtualization/workspaces",
+      "apiVersion": "2023-09-05",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "applicationGroupReferences": "[parameters('applicationGroupIds')]",
+        "friendlyName": "[parameters('friendlyName')]",
+        "description": "[parameters('workspaceDescription')]"
+      }
+    }
+  ],
+  "outputs": {
+    "workspaceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Updated workspace resource ID"
+      },
+      "value": "[resourceId('Microsoft.DesktopVirtualization/workspaces', parameters('workspaceName'))]"
+    }
+  }
+}

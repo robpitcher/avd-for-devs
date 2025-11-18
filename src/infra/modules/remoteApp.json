@@ -1,0 +1,90 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.38.33.27573",
+      "templateHash": "10175100945521547797"
+    }
+  },
+  "parameters": {
+    "remoteAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the RemoteApp"
+      }
+    },
+    "displayName": {
+      "type": "string",
+      "metadata": {
+        "description": "The display name for the RemoteApp"
+      }
+    },
+    "commandPath": {
+      "type": "string",
+      "metadata": {
+        "description": "The command path for the application"
+      }
+    },
+    "appGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The application group name where this app will be published"
+      }
+    },
+    "appDescription": {
+      "type": "string",
+      "defaultValue": "RemoteApp published via Azure Virtual Desktop",
+      "metadata": {
+        "description": "Description of the RemoteApp"
+      }
+    },
+    "commandLineArguments": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Command line arguments (optional)"
+      }
+    },
+    "showInPortal": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Show in portal"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DesktopVirtualization/applicationGroups/applications",
+      "apiVersion": "2023-09-05",
+      "name": "[format('{0}/{1}', parameters('appGroupName'), parameters('remoteAppName'))]",
+      "properties": {
+        "description": "[parameters('appDescription')]",
+        "friendlyName": "[parameters('displayName')]",
+        "filePath": "[parameters('commandPath')]",
+        "commandLineSetting": "DoNotAllow",
+        "commandLineArguments": "[parameters('commandLineArguments')]",
+        "showInPortal": "[parameters('showInPortal')]",
+        "applicationType": "InBuilt"
+      }
+    }
+  ],
+  "outputs": {
+    "remoteAppId": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource ID of the RemoteApp"
+      },
+      "value": "[resourceId('Microsoft.DesktopVirtualization/applicationGroups/applications', split(format('{0}/{1}', parameters('appGroupName'), parameters('remoteAppName')), '/')[0], split(format('{0}/{1}', parameters('appGroupName'), parameters('remoteAppName')), '/')[1])]"
+    },
+    "remoteAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the RemoteApp"
+      },
+      "value": "[format('{0}/{1}', parameters('appGroupName'), parameters('remoteAppName'))]"
+    }
+  }
+}
