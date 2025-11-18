@@ -127,29 +127,29 @@ resource avdAgent 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
   }
 }
 
-// VS Code Installation Extension - runs after AVD agent registration
-resource vscodeInstall 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
-  parent: vm
-  name: 'InstallVSCode'
-  location: location
-  dependsOn: [
-    avdAgent
-  ]
-  properties: {
-    publisher: 'Microsoft.Compute'
-    type: 'CustomScriptExtension'
-    typeHandlerVersion: '1.10'
-    autoUpgradeMinorVersion: true
-    settings: {
-      fileUris: [
-        vscodeInstallScriptUri
-      ]
-    }
-    protectedSettings: {
-      commandToExecute: 'powershell -ExecutionPolicy Unrestricted -File install-vscode.ps1'
-    }
-  }
-}
+// // VS Code Installation Extension - runs after AVD agent registration
+// resource vscodeInstall 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+//   parent: vm
+//   name: 'InstallVSCode'
+//   location: location
+//   dependsOn: [
+//     avdAgent
+//   ]
+//   properties: {
+//     publisher: 'Microsoft.Compute'
+//     type: 'CustomScriptExtension'
+//     typeHandlerVersion: '1.10'
+//     autoUpgradeMinorVersion: true
+//     settings: {
+//       fileUris: [
+//         vscodeInstallScriptUri
+//       ]
+//     }
+//     protectedSettings: {
+//       commandToExecute: 'powershell -ExecutionPolicy Unrestricted -File install-vscode.ps1'
+//     }
+//   }
+// }
 
 @description('The resource ID of the VM')
 output vmId string = vm.id
