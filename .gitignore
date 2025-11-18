@@ -3,6 +3,10 @@ main.bicepparam
 *.bicepparam
 !example.bicepparam
 
+# Bicep compiled outputs
+*.json
+!**/parameters/*.json
+
 # PowerShell
 *.log
 
