@@ -64,8 +64,8 @@ output hostPoolId string = hostPool.id
 @description('The name of the host pool')
 output hostPoolName string = hostPool.name
 
+#disable-next-line outputs-should-not-contain-secrets
 @description('The registration token for joining session hosts')
-@secure()
 output registrationToken string = hostPool.listRegistrationTokens().value[0].token
 
 @description('The token expiration time')

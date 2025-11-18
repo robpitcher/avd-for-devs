@@ -33,9 +33,6 @@ param hostPoolName string
 @description('Image reference object')
 param imageReference object
 
-@description('URI to VS Code installation script')
-param vscodeInstallScriptUri string
-
 @description('Tags to apply to resources')
 param tags object = {}
 

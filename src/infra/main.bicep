@@ -41,10 +41,6 @@ param baseImageOffer string = 'windows-11'
 @description('Base image SKU (multi-session AVD image)')
 param baseImageSku string = 'win11-24h2-avd'
 
-// VS Code Installation Script
-@description('URI to VS Code installation script')
-param vscodeInstallScriptUri string = 'https://raw.githubusercontent.com/robpitcher/avd-for-devs/main/src/infra/scripts/install-vscode.ps1'
-
 // Workspace and Application Group
 @description('Name of the AVD workspace')
 param workspaceName string
@@ -207,7 +203,6 @@ module sessionHosts 'modules/sessionHostVM.bicep' = [for i in range(0, hostCount
     hostPoolToken: hostPool.outputs.registrationToken
     hostPoolName: hostPoolName
     imageReference: imageReference
-    vscodeInstallScriptUri: vscodeInstallScriptUri
     tags: commonTags
   }
 }]

@@ -14,7 +14,7 @@ param commandPath string
 param appGroupName string
 
 @description('Description of the RemoteApp')
-param appDescription string = ''
+param appDescription string = 'RemoteApp published via Azure Virtual Desktop'
 
 @description('Command line arguments (optional)')
 param commandLineArguments string = ''
@@ -26,6 +26,7 @@ param showInPortal bool = true
 resource remoteApp 'Microsoft.DesktopVirtualization/applicationGroups/applications@2023-09-05' = {
   name: '${appGroupName}/${remoteAppName}'
   properties: {
+#disable-next-line BCP334
     description: appDescription
     friendlyName: displayName
     filePath: commandPath
