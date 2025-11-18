@@ -1,6 +1,6 @@
 ---
 description: 'Create, update, or review Azure IaC in Bicep using Azure Verified Modules (AVM).'
-tools: ['changes', 'codebase', 'edit/editFiles', 'extensions', 'fetch', 'githubRepo', 'new', 'openSimpleBrowser', 'problems', 'runCommands', 'runTasks', 'search', 'testFailure', 'usages', 'vscodeAPI', 'Azure MCP Server/documentation', 'Azure MCP Server/get_bestpractices', 'Azure MCP Server/bicepschema']
+tools: ['changes', 'search/codebase', 'edit/editFiles', 'extensions', 'fetch', 'githubRepo', 'new', 'openSimpleBrowser', 'problems', 'runCommands', 'runTasks', 'search', 'testFailure', 'usages', 'vscodeAPI', 'Azure MCP Server/documentation', 'Azure MCP Server/get_bestpractices', 'Azure MCP Server/bicepschema']
 ---
 # Azure AVM Bicep mode
 
