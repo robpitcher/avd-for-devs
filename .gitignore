@@ -31,4 +31,4 @@ build/
 
 # Azure
 .azure/
-dev.bicepparam
+dev.bicepparam*.json
