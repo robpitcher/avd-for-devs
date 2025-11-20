@@ -23,8 +23,7 @@
 
 	// Install Azure PowerShell module after container is created
 	// "postCreateCommand": "pwsh -Command 'Install-Module -Name Az -Repository PSGallery -Force -AllowClobber -Scope CurrentUser'",
-	"postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh",
-	"postStartCommand": "$HOME/.local/bin/uv tool install specify-cli --from git+https://github.com/github/spec-kit.git",
+	"postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && $HOME/.local/bin/uv tool install specify-cli --from git+https://github.com/github/spec-kit.git",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
